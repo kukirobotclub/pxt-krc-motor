@@ -48,6 +48,61 @@ namespace KRCmotor {
     }
 
     //% weight=90
+    //% blockId=motor_MotorOnOff block="MotorOn|%index|dir|%Dir"
+    //% index.fieldEditor="gridpicker" index.fieldOptions.columns=2
+    //% direction.fieldEditor="gridpicker" direction.fieldOptions.columns=2
+    export function MotorOnOff(index: Motors, direction: Dir): void {
+        if (index == 1) {	//Motor1
+            if (direction == 1) {
+                pins.digitalWritePin(DigitalPin.P8, 1)
+                pins.digitalWritePin(DigitalPin.P12, 0)
+            } else if (direction == 2) {
+                pins.digitalWritePin(DigitalPin.P8, 0)
+                pins.digitalWritePin(DigitalPin.P12, 1)
+            } else {
+                pins.digitalWritePin(DigitalPin.P8, 0)
+                pins.digitalWritePin(DigitalPin.P12, 0)
+            }
+        }
+        if (index == 2) {	//Motor2
+            if (direction == 1) {
+                pins.digitalWritePin(DigitalPin.P13, 1)
+                pins.digitalWritePin(DigitalPin.P14, 0)
+            } else if (direction == 2) {
+                pins.digitalWritePin(DigitalPin.P13, 0)
+                pins.digitalWritePin(DigitalPin.P14, 1)
+            } else {
+                pins.digitalWritePin(DigitalPin.P13, 0)
+                pins.digitalWritePin(DigitalPin.P14, 0)
+            }
+        }
+        if (index == 3) {	//Motor3
+            if (direction == 1) {
+                pins.digitalWritePin(DigitalPin.P15, 1)
+                pins.digitalWritePin(DigitalPin.P16, 0)
+            } else if (direction == 2) {
+                pins.digitalWritePin(DigitalPin.P15, 0)
+                pins.digitalWritePin(DigitalPin.P16, 1)
+            } else {
+                pins.digitalWritePin(DigitalPin.P15, 0)
+                pins.digitalWritePin(DigitalPin.P16, 0)
+            }
+        }
+        if (index == 4) {	//Motor4
+            if (direction == 1) {
+                pins.digitalWritePin(DigitalPin.P1, 1)
+                pins.digitalWritePin(DigitalPin.P2, 0)
+            } else if (direction == 2) {
+                pins.digitalWritePin(DigitalPin.P1, 0)
+                pins.digitalWritePin(DigitalPin.P2, 1)
+            } else {
+                pins.digitalWritePin(DigitalPin.P1, 0)
+                pins.digitalWritePin(DigitalPin.P2, 0)
+            }
+        }
+    }
+
+    //% weight=90
     //% blockId=motor_MotorSpeed block="MotorSpeed|%index|dir|%Dir|speed|%speed"
     //% speed.min=0 speed.max=1023
     //% index.fieldEditor="gridpicker" index.fieldOptions.columns=2
@@ -114,61 +169,6 @@ namespace KRCmotor {
             } else if (direction == 2) {
                 pins.digitalWritePin(DigitalPin.P1, 0)
                 pins.analogWritePin(AnalogPin.P2, speed)
-            } else {
-                pins.digitalWritePin(DigitalPin.P1, 0)
-                pins.digitalWritePin(DigitalPin.P2, 0)
-            }
-        }
-    }
-
-    //% weight=90
-    //% blockId=motor_MotorOnOff block="MotorOn|%index|dir|%Dir"
-    //% index.fieldEditor="gridpicker" index.fieldOptions.columns=2
-    //% direction.fieldEditor="gridpicker" direction.fieldOptions.columns=2
-    export function MotorOnOff(index: Motors, direction: Dir): void {
-        if (index == 1) {	//Motor1
-            if (direction == 1) {
-                pins.digitalWritePin(DigitalPin.P8, 1)
-                pins.digitalWritePin(DigitalPin.P12, 0)
-            } else if (direction == 2) {
-                pins.digitalWritePin(DigitalPin.P8, 0)
-                pins.digitalWritePin(DigitalPin.P12, 1)
-            } else {
-                pins.digitalWritePin(DigitalPin.P8, 0)
-                pins.digitalWritePin(DigitalPin.P12, 0)
-            }
-        }
-        if (index == 2) {	//Motor2
-            if (direction == 1) {
-                pins.digitalWritePin(DigitalPin.P13, 1)
-                pins.digitalWritePin(DigitalPin.P14, 0)
-            } else if (direction == 2) {
-                pins.digitalWritePin(DigitalPin.P13, 0)
-                pins.digitalWritePin(DigitalPin.P14, 1)
-            } else {
-                pins.digitalWritePin(DigitalPin.P13, 0)
-                pins.digitalWritePin(DigitalPin.P14, 0)
-            }
-        }
-        if (index == 3) {	//Motor3
-            if (direction == 1) {
-                pins.digitalWritePin(DigitalPin.P15, 1)
-                pins.digitalWritePin(DigitalPin.P16, 0)
-            } else if (direction == 2) {
-                pins.digitalWritePin(DigitalPin.P15, 0)
-                pins.digitalWritePin(DigitalPin.P16, 1)
-            } else {
-                pins.digitalWritePin(DigitalPin.P15, 0)
-                pins.digitalWritePin(DigitalPin.P16, 0)
-            }
-        }
-        if (index == 4) {	//Motor4
-            if (direction == 1) {
-                pins.digitalWritePin(DigitalPin.P1, 1)
-                pins.digitalWritePin(DigitalPin.P2, 0)
-            } else if (direction == 2) {
-                pins.digitalWritePin(DigitalPin.P1, 0)
-                pins.digitalWritePin(DigitalPin.P2, 1)
             } else {
                 pins.digitalWritePin(DigitalPin.P1, 0)
                 pins.digitalWritePin(DigitalPin.P2, 0)

@@ -15,12 +15,14 @@ ON/OFF制御とスピード制御ができる
 ### 1.モーターON/OFF
 ![image](KRCmotorOn01.png)
 制御したいモータ番号を選択
+
 ![image](KRCmotorOn02.png)
 回転方向を選択
 
 ### 2.モータースピード制御
 ![image](KRCmotorSpeed01.png)
 スピード制御したいモータ番号を選択
+
 ![image](KRCmotorSpeed02.png)
 回転方向を選択
 Speedは０(停止)～1023(最大速度）を入力

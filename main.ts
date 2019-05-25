@@ -48,7 +48,7 @@ namespace KRCmotor {
     }
 
     //% weight=90
-    //% blockId=motor_MotorSpeed block="Motor|%index|dir|%Dir|speed|%speed"
+    //% blockId=motor_MotorSpeed block="MotorSpeed|%index|dir|%Dir|speed|%speed"
     //% speed.min=0 speed.max=1023
     //% index.fieldEditor="gridpicker" index.fieldOptions.columns=2
     //% direction.fieldEditor="gridpicker" direction.fieldOptions.columns=2
@@ -122,7 +122,7 @@ namespace KRCmotor {
     }
 
     //% weight=90
-    //% blockId=motor_MotorOnOff block="Motor|%index|dir|%Dir"
+    //% blockId=motor_MotorOnOff block="MotorOn|%index|dir|%Dir"
     //% index.fieldEditor="gridpicker" index.fieldOptions.columns=2
     //% direction.fieldEditor="gridpicker" direction.fieldOptions.columns=2
     export function MotorOnOff(index: Motors, direction: Dir): void {
@@ -175,4 +175,27 @@ namespace KRCmotor {
             }
         }
     }
+
+    //% weight=90
+    //% blockId=motor_MotorStop block="MotorStop|%index"
+    //% index.fieldEditor="gridpicker" index.fieldOptions.columns=2
+    export function MotorStop(index: Motors): void {
+        if (index == 1) {	//Motor1
+            pins.digitalWritePin(DigitalPin.P8, 0)
+            pins.digitalWritePin(DigitalPin.P12, 0)
+        }
+        if (index == 2) {	//Motor2
+            pins.digitalWritePin(DigitalPin.P13, 0)
+            pins.digitalWritePin(DigitalPin.P14, 0)
+        }
+        if (index == 3) {	//Motor3
+            pins.digitalWritePin(DigitalPin.P15, 0)
+            pins.digitalWritePin(DigitalPin.P16, 0)
+        }
+        if (index == 4) {	//Motor4
+            pins.digitalWritePin(DigitalPin.P1, 0)
+            pins.digitalWritePin(DigitalPin.P2, 0)
+        }
+    }
+
 }

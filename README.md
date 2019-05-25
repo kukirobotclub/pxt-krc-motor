@@ -1,12 +1,5 @@
 # KRCモータードライバ
 
-## Table of Contents
-
-* [URL](#url)
-* [ 概要](# 概要)
-* [ブロック](#ブロック)
-* [License](#license)
-* [ 注意点](# 注意点)
 
 ## URL
 project URL:  ```https://github.com/kukirobotclub/pxt-krc-motor```

@@ -1,4 +1,4 @@
-//% weight=50 color=#ADB367 icon="\f085" block="KRC"
+//% weight=50 color=#ADB367 icon="\f013" block="モーター"
 namespace KRCmotor {
     /**
      * The user selects the 4-way dc motor.

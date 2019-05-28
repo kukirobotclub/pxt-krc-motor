@@ -27,6 +27,7 @@ namespace KRCmotor {
     let elapsed_tm = 0			// 経過時間
     let eep_next_tm = 0			// 再生時：EEPROMに記録されている操作時間
     let eep_next_cont = 0		// 再生時：EEPROMに記録されている操作内容
+    let eep_markstr = 0         // 
 
     let pwm1init = false
     let pwm2init = false
@@ -349,16 +350,26 @@ namespace KRCmotor {
     export function RecMotorData(control: number, mode: number): void {
         if (eep_write_addr == 0) { //最初の書き込み
             rec_start_tm = input.runningTime()
-            write_word(eep_write_addr, "KR")	//Magic number
+            write_word(eep_write_addr, 0x4b52)	//Magic number "KR"
             eep_write_addr += 2
-            write_word(eep_write_addr, "C ")	//Magic number
-            eep_write_addr += 2
+            write_word(eep_write_addr, 0x4320)	//Magic number "C "
+            eep_write_addr = 0
             serial.writeLine("Start Recording")
             //書き込めたかチェックする
+            eep_markstr = read_word(eep_read_addr)
+            if (eep_markstr != 0x4b52) EEPerr = 2
+            serial.writeNumber(eep_markstr)
+            serial.writeString(",")
+            eep_read_addr += 2
+            eep_markstr = read_word(eep_read_addr)
+            if (eep_markstr != 0x4320) EEPerr = 2
+            serial.writeNumber(eep_markstr)
+            serial.writeString("\n\r")
+            eep_read_addr += 2
         }
         elapsed_tm = (input.runningTime() - rec_start_tm) / 10
         if (elapsed_tm >= MAX_EEP_TIME) {		// 最大記録時間超過
-            recording_stop()
+            RecMotorStop()
             return
         }
         if (control != last_controls) {
@@ -372,7 +383,7 @@ namespace KRCmotor {
             write_word(eep_write_addr, control + (mode << 8))
             eep_write_addr += 2
             serial.writeString(" Control:")
-            serial.writeNumber(now_controls)
+            serial.writeNumber(control)
             serial.writeString("\n\r")
         }
     }
@@ -450,12 +461,14 @@ namespace KRCmotor {
             play_start_tm = input.runningTime()
             //Magic numberのチェック
             eep_markstr = read_word(eep_read_addr)
-            if (eep_markstr != "KR") EEPerr = 2
-            serial.writeString(eep_markstr)
+            if (eep_markstr != 0x4b52) EEPerr = 2         // "KR"
+            serial.writeNumber(eep_markstr)
+            serial.writeString(",")
             eep_read_addr += 2
             eep_markstr = read_word(eep_read_addr)
-            if (eep_markstr != "C ") EEPerr = 2
-            serial.writeString(eep_markstr)
+            if (eep_markstr != 0x4320) EEPerr = 2       // "C "
+            serial.writeNumber(eep_markstr)
+            serial.writeString("\n\r")
             eep_read_addr += 2
             read_next_control()
         }
@@ -463,7 +476,7 @@ namespace KRCmotor {
         if (elapsed_tm >= MAX_EEP_TIME) {		// 最大記録時間超過
             EEPerr |= 1
         }
-        retdata = 0x2000	// デフォルトは無効データ
+        let retdata = 0x2000	// デフォルトは無効データ
         if (EEPerr == 0) {		// ready eeprom
             if (elapsed_tm >= eep_next_tm) {
                 serial.writeNumber(eep_read_addr)

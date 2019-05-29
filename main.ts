@@ -10,11 +10,23 @@ namespace KRCmotor {
 
     /* DCモータの回転方向の指定 */
     export enum Dir {
-        //% blockId="STOP" block="STOP"
         STOP = 0,
-        //% blockId="FWD" block="FWD"
         FWD = 1,
-        //% blockId="REV" block="REV"
+        REV = 2
+    }
+    export enum Dir1 {
+        STOP = 0,
+        FWD = 1,
+        REV = 2
+    }
+    export enum Dir2 {
+        STOP = 0,
+        FWD = 1,
+        REV = 2
+    }
+    export enum Dir3 {
+        STOP = 0,
+        FWD = 1,
         REV = 2
     }
 
@@ -297,9 +309,9 @@ namespace KRCmotor {
      * @param Motor4 motor direction 
      */
     //% weight=90
-    //% blockId=motor_MakeMotorData block="モータデータ作成 M1|%Dir|M2|%Dir|M3|%Dir|M4|%Dir"
+    //% blockId=motor_MakeMotorData block="モータデータ作成 M1|%Dir|M2|%Dir1|M3|%Dir2|M4|%Dir3"
     //% inlineInputMode=inline
-    export function MakeMotorData(Motor1: Dir, Motor2: Dir, Motor3: Dir, Motor4: Dir): number {
+    export function MakeMotorData(Motor1: Dir, Motor2: Dir1, Motor3: Dir2, Motor4: Dir3): number {
         serial.writeString("MakeMotorData=")
         serial.writeNumber(Motor1)
         serial.writeString(",")

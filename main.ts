@@ -374,12 +374,12 @@ namespace KRCmotor {
             eep_write_addr = 0
             serial.writeLine("RecMotorData 1st")
             //書き込めたかチェックする
-            eep_markstr = read_word(eep_read_addr)
+            eep_markstr = read_word(eep_write_addr)
             if (eep_markstr != 0x4b52) EEPerr = 2
             serial.writeNumber(eep_markstr)
             serial.writeString(",")
             eep_write_addr += 2
-            eep_markstr = read_word(eep_read_addr)
+            eep_markstr = read_word(eep_write_addr)
             if (eep_markstr != 0x4320) EEPerr = 2
             serial.writeNumber(eep_markstr)
             serial.writeString(">>")

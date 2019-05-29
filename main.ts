@@ -63,6 +63,11 @@ namespace KRCmotor {
         pins.i2cWriteBuffer(EEPROM_I2C_ADDR, buf)
     }
 
+    /**
+     * write a dword to special address
+     * @param addr eeprom address, eg: 4
+     * @param dat is the data will be write, eg: 7
+     */
     function write_dword(addr: number, dat: number): void {
         let buf = pins.createBuffer(6);
         buf[0] = addr >> 8;
@@ -74,12 +79,7 @@ namespace KRCmotor {
         pins.i2cWriteBuffer(EEPROM_I2C_ADDR, buf)
     }
 
-    function read_byte(addr: number): number {
-        pins.i2cWriteNumber(EEPROM_I2C_ADDR, addr, NumberFormat.UInt16BE);
-        return pins.i2cReadNumber(EEPROM_I2C_ADDR, NumberFormat.UInt8BE);
-    }
-
-    /**
+   /**
      * read a word from special address
      * @param addr eeprom address, eg: 2
      */
@@ -439,13 +439,13 @@ namespace KRCmotor {
     //% weight=90
     //% blockId=motor_ReadMotorData block="EEPデータ読み込み"
     export function ReadMotorData(): number {
-        eep_markstr = read_byte(eep_read_addr)
+        eep_markstr = read_word(eep_read_addr)
         serial.writeString("EEP adr=")
         serial.writeNumber(eep_read_addr)
         serial.writeString(" dat=")
         serial.writeNumber(eep_markstr)
         serial.writeString("\n\r")
-        eep_read_addr += 1
+        eep_read_addr += 2
         return eep_markstr
     }
 

@@ -155,8 +155,6 @@ namespace KRCmotor {
     //% weight=90
     //% blockId=motor_MotorSpeed block="モータスピード|%index|動作|%Dir|スピード|%speed"
     //% speed.min=0 speed.max=1023
-    //% index.fieldEditor="gridpicker" index.fieldOptions.columns=2
-    //% direction.fieldEditor="gridpicker" direction.fieldOptions.columns=2
     export function MotorSpeed(index: Motors, direction: Dir, speed: number): void {
         if (speed >= 1024) {
             speed = 1023
@@ -228,7 +226,6 @@ namespace KRCmotor {
 
     //% weight=90
     //% blockId=motor_MotorStop block="モータ停止|%index"
-    //% index.fieldEditor="gridpicker" index.fieldOptions.columns=2
     export function MotorStop(index: Motors): void {
         if (index == 1) {	//Motor1
             pins.digitalWritePin(DigitalPin.P8, 0)
@@ -414,6 +411,7 @@ namespace KRCmotor {
     // eep_next_tm,eep_next_contに次のデータをICHIGO-ROMから読む
     // アドレスは自動インクリメント
     function read_next_control() {
+        serial.writeString("Adr:")
         serial.writeNumber(eep_read_addr)
         serial.writeString(" [tm:")
         eep_next_tm = read_word(eep_read_addr)
@@ -425,6 +423,18 @@ namespace KRCmotor {
         serial.writeString("] ")
         eep_read_addr += 2
     }
+    // EEPをwordで読み込む（中身確認用）
+    //% weight=90
+    //% blockId=motor_ReadMotorData block="EEPデータ読み込み"
+    export function ReadMotorData(): number {
+        eep_markstr = read_word(eep_read_addr)
+        serial.writeString("EEP adr=")
+        serial.writeNumber(eep_read_addr)
+        serial.writeString("dat=")
+        serial.writeNumber(eep_markstr)
+        eep_read_addr += 2
+        return eep_markstr
+    }
 
     // 再生開始
     //% weight=90
@@ -433,12 +443,12 @@ namespace KRCmotor {
         serial.writeLine("Start Playing")
         play_start_tm = input.runningTime()
         eep_read_addr = 0
-        read_next_control()
-    }
+     }
     // 再生停止
     //% weight=90
     //% blockId=motor_PlayMotorStop block="再生 終了宣言"
     export function PlayMotorStop(): void {
+        serial.writeLine("Stop Playing")
         play_start_tm = 0
         eep_read_addr = 0
     }
@@ -483,6 +493,7 @@ namespace KRCmotor {
         if (eep_write_addr == 0) { //最初の読み込み
             play_start_tm = input.runningTime()
             //Magic numberのチェック
+            serial.writeLine("Start Playing 1st")
             eep_markstr = read_word(eep_read_addr)
             if (eep_markstr != 0x4b52) EEPerr = 2         // "KR"
             serial.writeNumber(eep_markstr)
@@ -491,6 +502,8 @@ namespace KRCmotor {
             eep_markstr = read_word(eep_read_addr)
             if (eep_markstr != 0x4320) EEPerr = 2       // "C "
             serial.writeNumber(eep_markstr)
+            serial.writeString(">>")
+            serial.writeNumber(EEPerr)
             serial.writeString("\n\r")
             eep_read_addr += 2
             read_next_control()

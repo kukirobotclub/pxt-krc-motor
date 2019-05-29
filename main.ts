@@ -378,14 +378,14 @@ namespace KRCmotor {
             if (eep_markstr != 0x4b52) EEPerr = 2
             serial.writeNumber(eep_markstr)
             serial.writeString(",")
-            eep_read_addr += 2
+            eep_write_addr += 2
             eep_markstr = read_word(eep_read_addr)
             if (eep_markstr != 0x4320) EEPerr = 2
             serial.writeNumber(eep_markstr)
             serial.writeString(">>")
             serial.writeNumber(EEPerr)
             serial.writeString("\n\r")
-            eep_read_addr += 2
+            eep_write_addr += 2
         }
         elapsed_tm = (input.runningTime() - rec_start_tm) / 10
         if (elapsed_tm >= MAX_EEP_TIME) {		// 最大記録時間超過
@@ -430,8 +430,9 @@ namespace KRCmotor {
         eep_markstr = read_word(eep_read_addr)
         serial.writeString("EEP adr=")
         serial.writeNumber(eep_read_addr)
-        serial.writeString("dat=")
+        serial.writeString(" dat=")
         serial.writeNumber(eep_markstr)
+        serial.writeString("\n\r")
         eep_read_addr += 2
         return eep_markstr
     }

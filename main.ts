@@ -368,24 +368,21 @@ namespace KRCmotor {
     export function RecMotorData(control: number, mode: number): void {
         if (eep_write_addr == 0) { //最初の書き込み
             rec_start_tm = input.runningTime()
-            write_word(eep_write_addr, 0x4b52)	//Magic number "KR"
-            eep_write_addr += 2
-            write_word(eep_write_addr, 0x4320)	//Magic number "C "
-            eep_write_addr = 0
+            write_word(0, 0x4b52)	//Magic number "KR"
+            write_word(2, 0x4320)	//Magic number "C "
+            eep_write_addr = 4
             serial.writeLine("RecMotorData 1st")
             //書き込めたかチェックする
-            eep_markstr = read_word(eep_write_addr)
+            eep_markstr = read_word(0)
             if (eep_markstr != 0x4b52) EEPerr = 2
             serial.writeNumber(eep_markstr)
             serial.writeString(",")
-            eep_write_addr += 2
-            eep_markstr = read_word(eep_write_addr)
+            eep_markstr = read_word(2)
             if (eep_markstr != 0x4320) EEPerr = 2
             serial.writeNumber(eep_markstr)
             serial.writeString(">>")
             serial.writeNumber(EEPerr)
             serial.writeString("\n\r")
-            eep_write_addr += 2
         }
         elapsed_tm = (input.runningTime() - rec_start_tm) / 10
         if (elapsed_tm >= MAX_EEP_TIME) {		// 最大記録時間超過
@@ -444,7 +441,7 @@ namespace KRCmotor {
         serial.writeLine("Start Playing")
         play_start_tm = input.runningTime()
         eep_read_addr = 0
-     }
+    }
     // 再生停止
     //% weight=90
     //% blockId=motor_PlayMotorStop block="再生 終了宣言"
@@ -491,7 +488,7 @@ namespace KRCmotor {
     //% weight=90
     //% blockId=motor_PlayMotorData block="再生 データ読み込み"
     export function PlayMotorData(): number {
-        if (eep_write_addr == 0) { //最初の読み込み
+        if (eep_read_addr == 0) { //最初の読み込み
             play_start_tm = input.runningTime()
             //Magic numberのチェック
             serial.writeLine("Start Playing 1st")
@@ -541,4 +538,3 @@ namespace KRCmotor {
         return retdata
     }
 }
-

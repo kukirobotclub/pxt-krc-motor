@@ -63,6 +63,17 @@ namespace KRCmotor {
         pins.i2cWriteBuffer(EEPROM_I2C_ADDR, buf)
     }
 
+    function write_dword(addr: number, dat: number): void {
+        let buf = pins.createBuffer(6);
+        buf[0] = addr >> 8;
+        buf[1] = addr;
+        buf[2] = dat >> 24;
+        buf[3] = dat >> 16;
+        buf[4] = dat >> 8;
+        buf[5] = dat;
+        pins.i2cWriteBuffer(EEPROM_I2C_ADDR, buf)
+    }
+
     function read_byte(addr: number): number {
         pins.i2cWriteNumber(EEPROM_I2C_ADDR, addr, NumberFormat.UInt16BE);
         return pins.i2cReadNumber(EEPROM_I2C_ADDR, NumberFormat.UInt8BE);
@@ -373,8 +384,9 @@ namespace KRCmotor {
     export function RecMotorData(control: number, mode: number): void {
         if (eep_write_addr == 0) { //最初の書き込み
             rec_start_tm = input.runningTime()
-            write_word(0, 0x4b52)	//Magic number "KR"
-            write_word(2, 0x4320)	//Magic number "C "
+            write_dword(0,0x4b524320)
+            //write_word(0, 0x4b52)	//Magic number "KR"
+            //write_word(2, 0x4320)	//Magic number "C "
             eep_write_addr = 4
             serial.writeLine("RecMotorData 1st")
             //書き込めたかチェックする

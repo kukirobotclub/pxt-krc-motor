@@ -80,7 +80,7 @@ namespace KRCmotor {
         pins.i2cWriteBuffer(EEPROM_I2C_ADDR, buf)
     }
 
-   /**
+    /**
      * read a word from special address
      * @param addr eeprom address, eg: 2
      */

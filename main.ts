@@ -296,11 +296,16 @@ namespace KRCmotor {
     //% weight=90
     //% blockId=motor_MakeMotorData block="モータデータ作成 M1|%Dir|M2|%Dir|M3|%Dir|M4|%Dir"
     //% inlineInputMode=inline
-    //% Motor1.fieldEditor="gridpicker" Motor1.fieldOptions.columns=2
-    //% Motor2.fieldEditor="gridpicker" Motor2.fieldOptions.columns=2
-    //% Motor3.fieldEditor="gridpicker" Motor3.fieldOptions.columns=2
-    //% Motor4.fieldEditor="gridpicker" Motor4.fieldOptions.columns=2
     export function MakeMotorData(Motor1: Dir, Motor2: Dir, Motor3: Dir, Motor4: Dir): number {
+        serial.writeString("MakeMotorData=")
+        serial.writeNumber(Motor1)
+        serial.writeString(",")
+        serial.writeNumber(Motor2)
+        serial.writeString(",")
+        serial.writeNumber(Motor3)
+        serial.writeString(",")
+        serial.writeNumber(Motor4)
+        serial.writeString("\n\r")
         return ((Motor4 << 6) | (Motor3 << 4) | (Motor2 << 2) | Motor1)
     }
 

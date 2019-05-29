@@ -1,4 +1,4 @@
-//% weight=50 color=#ADB367 icon="\f085" block="KRC-TOOL"
+//% weight=10 color=#ADB367 icon="\f085" block="KRC-TOOL"
 namespace KRCmotor {
     /* ４つのDCモータの選択 */
     export enum Motors {
@@ -42,7 +42,7 @@ namespace KRCmotor {
     let elapsed_tm = 0			// 経過時間
     let eep_next_tm = 0			// 再生時：EEPROMに記録されている操作時間
     let eep_next_cont = 0		// 再生時：EEPROMに記録されている操作内容
-    let eep_markstr = 0         // 
+    let eep_markstr = 0         // EEP先頭のコード
 
     let pwm1init = false
     let pwm2init = false
@@ -373,13 +373,11 @@ namespace KRCmotor {
             eep_write_addr = 4
             serial.writeLine("RecMotorData 1st")
             //書き込めたかチェックする
-            eep_markstr = read_word(0)
-            if (eep_markstr != 0x4b52) EEPerr = 2
-            serial.writeNumber(eep_markstr)
+            if (read_word(0) != 0x4b52) EEPerr = 2
+            serial.writeNumber(read_word(0))
             serial.writeString(",")
-            eep_markstr = read_word(2)
-            if (eep_markstr != 0x4320) EEPerr = 2
-            serial.writeNumber(eep_markstr)
+            if (read_word(2) != 0x4320) EEPerr = 2
+            serial.writeNumber(read_word(2))
             serial.writeString(">>")
             serial.writeNumber(EEPerr)
             serial.writeString("\n\r")
@@ -454,7 +452,7 @@ namespace KRCmotor {
     //% weight=90
     //% blockId=motor_PlayMotorOk block="再生 Ok?"
     export function PlayMotorOk(): boolean {
-        if (EEPerr & 0xc000) {
+        if (EEPerr) {
             return false
         } else {
             return true

@@ -101,8 +101,6 @@ namespace KRCmotor {
 
     //% weight=90
     //% blockId=motor_MotorOnOff block="モータON|%index|動作|%Dir"
-    //% index.fieldEditor="gridpicker" index.fieldOptions.columns=2
-    //% direction.fieldEditor="gridpicker" direction.fieldOptions.columns=2
     export function MotorOnOff(index: Motors, direction: Dir): void {
         if (index == 1) {	//Motor1
             if (direction == 1) {

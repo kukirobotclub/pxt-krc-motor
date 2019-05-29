@@ -2,19 +2,19 @@
 
 
 ## URL
-project URL:  ```https://github.com/kukirobotclub/pxt-krc-motor```
+project URL:  ```https://github.com/kukirobotclub/pxt-krc-motor```<BR>
 上記のアドレスを拡張機能から張り付けて、拡張ブロックを導入する
 
 ## 概要
 KRCのマイクロビットボードのモータドライブコントロールの拡張ブロック
 
-DCモーター4chまでをサポート
+・DCモーター4chまでをサポート
 
-ON/OFF制御とスピード制御ができる
+・ON/OFF制御とスピード制御ができる
 
-EEPROMに操作記録
+・EEPROMに操作記録
 
-EEPROMの操作記録の再生
+・EEPROMの操作記録の再生
 
 
 

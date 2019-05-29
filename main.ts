@@ -238,6 +238,9 @@ namespace KRCmotor {
     //% weight=90
     //% blockId=motor_MotorWhole block="モータ一括ON|%motorall"
     export function MotorWhole(motorall: number): void {
+        serial.writeString("MotorWhole=")
+        serial.writeNumber(motorall)
+        serial.writeString("\n\r")
         if (motorall < 0 || 255 < motorall) {
             return	//Error
         }
@@ -298,7 +301,7 @@ namespace KRCmotor {
     //% Motor3.fieldEditor="gridpicker" Motor3.fieldOptions.columns=2
     //% Motor4.fieldEditor="gridpicker" Motor4.fieldOptions.columns=2
     export function MakeMotorData(Motor1: Dir, Motor2: Dir, Motor3: Dir, Motor4: Dir): number {
-        return (Motor4 * 64 + Motor3 * 16 + Motor2 * 4 + Motor1)
+        return ((Motor4 << 6) | (Motor3 << 4) | (Motor2 << 2) | Motor1)
     }
 
     // 記録開始
@@ -475,6 +478,9 @@ namespace KRCmotor {
         elapsed_tm = (input.runningTime() - play_start_tm) / 10
         if (elapsed_tm >= MAX_EEP_TIME) {		// 最大記録時間超過
             EEPerr |= 1
+            serial.writeString("OverMaxTime ")
+            serial.writeNumber(EEPerr)
+            serial.writeString("\n\r")
         }
         let retdata = 0x2000	// デフォルトは無効データ
         if (EEPerr == 0) {		// ready eeprom
@@ -496,6 +502,8 @@ namespace KRCmotor {
             }
         }
         retdata |= (EEPerr << 14)
+        serial.writeNumber(retdata) // only debug
+        serial.writeString(",")     // only debug
         return retdata
     }
 }

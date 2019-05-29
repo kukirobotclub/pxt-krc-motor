@@ -10,8 +10,11 @@ namespace KRCmotor {
 
     /* DCモータの回転方向の指定 */
     export enum Dir {
+        //% blockId="STOP" block="STOP"
         STOP = 0,
+        //% blockId="FWD" block="FWD"
         FWD = 1,
+        //% blockId="REV" block="REV"
         REV = 2
     }
 
@@ -321,7 +324,7 @@ namespace KRCmotor {
     //% weight=90
     //% blockId=motor_RecMotorStop block="記録 終了宣言"
     export function RecMotorStop(): void {
-        rec_start_tm =  0
+        rec_start_tm = 0
         serial.writeLine("Stop Recording")
         write_word(eep_write_addr, 0)
         eep_write_addr += 2
@@ -362,7 +365,7 @@ namespace KRCmotor {
             eep_write_addr += 2
             write_word(eep_write_addr, 0x4320)	//Magic number "C "
             eep_write_addr = 0
-            serial.writeLine("Start Recording")
+            serial.writeLine("RecMotorData 1st")
             //書き込めたかチェックする
             eep_markstr = read_word(eep_read_addr)
             if (eep_markstr != 0x4b52) EEPerr = 2
@@ -372,6 +375,8 @@ namespace KRCmotor {
             eep_markstr = read_word(eep_read_addr)
             if (eep_markstr != 0x4320) EEPerr = 2
             serial.writeNumber(eep_markstr)
+            serial.writeString(">>")
+            serial.writeNumber(EEPerr)
             serial.writeString("\n\r")
             eep_read_addr += 2
         }

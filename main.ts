@@ -639,9 +639,15 @@ namespace KRCmotor {
         }
         if (onoff) {
             tmp |= pins.i2cReadNumber(IOEXPANDER_I2C_ADDR, NumberFormat.UInt8LE, false)
-        } else {
+            serial.writeNumber(tmp)
+            serial.writeString(">")
+            tmp |= ioexpander_dir
+       } else {
             tmp = ~tmp
             tmp &= pins.i2cReadNumber(IOEXPANDER_I2C_ADDR, NumberFormat.UInt8LE, false)
+            serial.writeNumber(tmp)
+            serial.writeString(">")
+            tmp |= ioexpander_dir
         }
         pins.i2cWriteNumber(
             IOEXPANDER_I2C_ADDR,
@@ -665,7 +671,6 @@ namespace KRCmotor {
             serial.writeString("Error\n\r")
             return false	// Error setting is OUT
         }
-        tmp = ~tmp
         tmp &= pins.i2cReadNumber(IOEXPANDER_I2C_ADDR, NumberFormat.UInt8LE, false)
         serial.writeNumber(tmp)
         serial.writeString("\n\r")

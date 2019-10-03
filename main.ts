@@ -4,6 +4,7 @@
  *                GNU
  *
  * Version 2019-06-02 0.20
+ * Version 2019-10-01 0.30 Add Control-Pad
 */
 //% weight=10 color=#ADB367 icon="\f085" block="KRC-TOOL"
 namespace KRCmotor {
@@ -49,6 +50,12 @@ namespace KRCmotor {
         P7 = 0x7
     }
 
+    export enum AnalogPortNo {
+        P0 = 0x0,
+        P1 = 0x1,
+        P2 = 0x2
+    }
+
     /* EEPROM の定義 */
     const EEPROM_I2C_ADDR = 80	// EEPのI2Cアドレス
     const MAX_EEP_TIME = 65500	// EEP最大記録時間 655秒
@@ -75,12 +82,96 @@ namespace KRCmotor {
     let ioexpander_ready = false	// 設定済み
     let ioexpander_dir = 0xff		// 入出力設定　1:IN 0:OUT
 
+    /* コントロールパッドのチャタリング除去 */
+    let sw_cont0_3 = 0
+    let sw_cont0_2 = 0
+    let sw_cont0_1 = 0
+    let sw_cont0 = 0            // チャタリング除去後ボタンデータ AnalogPin.P0
+    let sw_cont1_3 = 0
+    let sw_cont1_2 = 0
+    let sw_cont1_1 = 0
+    let sw_cont1 = 0            // チャタリング除去後ボタンデータ AnalogPin.P1
+    let sw_status = 0           // 全コントロールパッドのボタン状態
+    let sw_last_status = 0      // 全コントロールパッドのボタン状態（以前の状態）
+    let sw_last_detect_tm = 0   // チャタリング除去時間
+
+	/*
+	 * アナログ抵抗値からコントロールパッドのスイッチデータを返す
+     * 4ビットのビットパターンになっていて、複数ボタンの情報がわかる
+     *      A                        
+     *   C  +  D →→→　D C B A
+     *      B    
+    */
+    /**
+     * analog controller to digital bit pattern
+     * @param anada controller analog input data
+     */
+    function set_swdat_from_anadat(anadat: number): number {
+        if (anadat < 98) return 5		//B0101;// A+C
+        if (anadat < 248) return 9		//B1001;// A+D
+        if (anadat < 356) return 1		//B0001;// A
+        if (anadat < 437) return 6		//B0110;// B+C
+        if (anadat < 501) return 10		//B1010;// B+D
+        if (anadat < 552) return 2		//B0010;// B
+        if (anadat < 594) return 4		//B0100;// C
+        if (anadat < 630) return 8		//B1000;// D
+        return 0						//B0000;// NC
+    }
+
+    //% weight=90
+    //% blockId=motor_SW_detecting block="コントローラ入力あり?"
+    export function SW_detecting(): boolean {
+        let chg = 0
+        if (input.runningTime() - sw_last_detect_tm < 20) return false	//チャタリング除去間隔を経過したか？
+        sw_last_detect_tm = input.runningTime()		// 更新
+        // Check analog controller
+        // contrller 0
+        sw_cont0_3 = sw_cont0_2
+        sw_cont0_2 = sw_cont0_1
+        sw_cont0_1 = set_swdat_from_anadat(pins.analogReadPin(AnalogPin.P0))
+        if (sw_cont0_1 == sw_cont0_2 && sw_cont0_1 == sw_cont0_3) sw_cont0 = sw_cont0_1
+        // contrller 1
+        sw_cont1_3 = sw_cont1_2
+        sw_cont1_2 = sw_cont1_1
+        sw_cont1_1 = set_swdat_from_anadat(pins.analogReadPin(AnalogPin.P1))
+        if (sw_cont1_1 == sw_cont1_2 && sw_cont1_1 == sw_cont1_3) sw_cont1 = sw_cont1_1
+        sw_status = sw_cont1 * 16 + sw_cont0
+        chg = sw_status ^ sw_last_status
+        sw_last_status = sw_status
+        if (chg) return true
+        return false
+    }
+
+	/*
+	 * 最新のコントロールパッドのスイッチデータを返す
+     * 8ビットのビットパターンになっていて、複数ボタンの情報がわかる
+     *      A                        
+     *   C  +  D →→→　D C B A
+     *      B    
+     * bit:7 6 5 4 3 2 1 0
+     *     | | | | | | | +----左A
+     *     | | | | | | +------左B
+     *     | | | | | +--------左C
+     *     | | | | +----------左D
+     *     | | | +------------右A
+     *     | | +--------------右B
+     *     | +----------------右C
+     *     +------------------右D
+    */
+    //% weight=90
+    //% blockId=motor_SW_detecting block="コントローラデータ"
+    export function ControllerButtonData(): number {
+        // アナログコントローラのボタンデータを返す
+        //  SW_detecting()で検出されたボタンデータのみを返す
+        return (sw_status & 0xff)
+    }
+
     /**
      * write a word to special address
      * @param addr eeprom address, eg: 2
      * @param dat is the data will be write, eg: 6
      */
-    function write_word(addr: number, dat: number): void {
+    function eep_write_word(addr: number, dat: number): void {
         let buf = pins.createBuffer(4)
         buf[0] = addr >> 8
         buf[1] = addr
@@ -94,14 +185,14 @@ namespace KRCmotor {
      * @param addr eeprom address, eg: 4
      * @param dat is the data will be write, eg: 7
      */
-    function write_dword(addr: number, dat: number): void {
-        let buf = pins.createBuffer(6);
-        buf[0] = addr >> 8;
-        buf[1] = addr;
-        buf[2] = dat >> 24;
-        buf[3] = dat >> 16;
-        buf[4] = dat >> 8;
-        buf[5] = dat;
+    function eep_write_dword(addr: number, dat: number): void {
+        let buf = pins.createBuffer(6)
+        buf[0] = addr >> 8
+        buf[1] = addr
+        buf[2] = dat >> 24
+        buf[3] = dat >> 16
+        buf[4] = dat >> 8
+        buf[5] = dat
         pins.i2cWriteBuffer(EEPROM_I2C_ADDR, buf)
     }
 
@@ -109,7 +200,7 @@ namespace KRCmotor {
      * read a word from special address
      * @param addr eeprom address, eg: 2
      */
-    function read_word(addr: number): number {
+    function eep_read_word(addr: number): number {
         pins.i2cWriteNumber(EEPROM_I2C_ADDR, addr, NumberFormat.UInt16BE)
         return pins.i2cReadNumber(EEPROM_I2C_ADDR, NumberFormat.UInt16BE)
     }
@@ -290,7 +381,11 @@ namespace KRCmotor {
     //% weight=90
     //% blockId=motor_MotorWhole block="モータ一括ON|%motorall"
     export function MotorWhole(motorall: number): void {
+        serial.writeString("MotorWhole=")
+        serial.writeNumber(motorall)
+        serial.writeString("\n\r")
         if (motorall < 0 || 255 < motorall) {
+            // 無効データやEEPerrのデータは無視される
             return	//Error
         }
         if (motorall & 1) {	//Motor1-1
@@ -346,6 +441,15 @@ namespace KRCmotor {
     //% blockId=motor_MakeMotorData block="モータデータ作成 M1|%Dir|M2|%Dir1|M3|%Dir2|M4|%Dir3"
     //% inlineInputMode=inline
     export function MakeMotorData(Motor1: Dir, Motor2: Dir1, Motor3: Dir2, Motor4: Dir3): number {
+        serial.writeString("MakeMotorData=")
+        serial.writeNumber(Motor1)
+        serial.writeString(",")
+        serial.writeNumber(Motor2)
+        serial.writeString(",")
+        serial.writeNumber(Motor3)
+        serial.writeString(",")
+        serial.writeNumber(Motor4)
+        serial.writeString("\n\r")
         return ((Motor4 << 6) | (Motor3 << 4) | (Motor2 << 2) | Motor1)
     }
 
@@ -357,6 +461,7 @@ namespace KRCmotor {
         eep_write_addr = 0
         last_controls = 0
         EEPerr &= 0xfe          // Reset Eof
+        serial.writeLine("Start Recording")
     }
     // 記録停止
     //% weight=90
@@ -364,9 +469,10 @@ namespace KRCmotor {
     export function RecMotorStop(): void {
         EEPerr |= 1
         rec_start_tm = 0
-        write_word(eep_write_addr, 0)
+        serial.writeLine("Stop Recording")
+        eep_write_word(eep_write_addr, 0)
         eep_write_addr += 2
-        write_word(eep_write_addr, 0xffff)
+        eep_write_word(eep_write_addr, 0xffff)
         last_controls = 0
     }
 
@@ -402,13 +508,20 @@ namespace KRCmotor {
         if (eep_write_addr == 0) { //最初の書き込み
             last_controls = 0
             rec_start_tm = input.runningTime()
-            write_dword(0, 0x4b524320)
-            //write_word(0, 0x4b52)	//Magic number "KR"
-            //write_word(2, 0x4320)	//Magic number "C "
+            eep_write_dword(0, 0x4b524320)
+            //eep_write_word(0, 0x4b52)	//Magic number "KR"
+            //eep_write_word(2, 0x4320)	//Magic number "C "
             eep_write_addr = 4
+            serial.writeLine("RecMotorData 1st")
             //書き込めたかチェックする
-            if (read_word(0) != 0x4b52) EEPerr = 2
-            if (read_word(2) != 0x4320) EEPerr = 2
+            if (eep_read_word(0) != 0x4b52) EEPerr = 2
+            serial.writeNumber(eep_read_word(0))
+            serial.writeString(",")
+            if (eep_read_word(2) != 0x4320) EEPerr = 2
+            serial.writeNumber(eep_read_word(2))
+            serial.writeString(">>")
+            serial.writeNumber(EEPerr)
+            serial.writeString("\n\r")
         }
         elapsed_tm = (input.runningTime() - rec_start_tm) / 10
         if (elapsed_tm >= MAX_EEP_TIME) {		// 最大記録時間超過
@@ -419,10 +532,16 @@ namespace KRCmotor {
         if (control != last_controls) {
             // EEPに記録
             last_controls = control
-            write_word(eep_write_addr, elapsed_tm)
+            eep_write_word(eep_write_addr, elapsed_tm)
             eep_write_addr += 2
-            write_word(eep_write_addr, control + (mode << 8))
+            serial.writeNumber(eep_write_addr)
+            serial.writeString(" Elapsed:")
+            serial.writeNumber(elapsed_tm)
+            eep_write_word(eep_write_addr, control + (mode << 8))
             eep_write_addr += 2
+            serial.writeString(" Control:")
+            serial.writeNumber(control)
+            serial.writeString("\n\r")
         }
         if (eep_write_addr >= MAX_EEP_ADDR) {		// 最大記録アドレス超過
             RecMotorStop()
@@ -433,16 +552,28 @@ namespace KRCmotor {
     // eep_next_tm,eep_next_contに次のデータをICHIGO-ROMから読む
     // アドレスは自動インクリメント
     function read_next_control() {
-        eep_next_tm = read_word(eep_read_addr)
+        serial.writeString("Adr:")
+        serial.writeNumber(eep_read_addr)
+        serial.writeString(" [tm:")
+        eep_next_tm = eep_read_word(eep_read_addr)
+        serial.writeNumber(eep_next_tm)
+        serial.writeString(" ct:")
         eep_read_addr += 2
-        eep_next_cont = read_word(eep_read_addr)
+        eep_next_cont = eep_read_word(eep_read_addr)
+        serial.writeNumber(eep_next_cont)
+        serial.writeString("] ")
         eep_read_addr += 2
     }
     // EEPをwordで読み込む（中身確認用）
     //% weight=90
     //% blockId=motor_ReadMotorData block="EEPデータ読み込み（デバッグ用）"
     export function ReadMotorData(): number {
-        eep_markstr = read_word(eep_read_addr)
+        eep_markstr = eep_read_word(eep_read_addr)
+        serial.writeString("EEP adr=")
+        serial.writeNumber(eep_read_addr)
+        serial.writeString(" dat=")
+        serial.writeNumber(eep_markstr)
+        serial.writeString("\n\r")
         eep_read_addr += 2
         return eep_markstr
     }
@@ -451,6 +582,7 @@ namespace KRCmotor {
     //% weight=90
     //% blockId=motor_PlayMotorStart block="再生 開始宣言"
     export function PlayMotorStart(): void {
+        serial.writeLine("Start Playing")
         play_start_tm = input.runningTime()
         eep_read_addr = 0
         EEPerr &= 0xfe          // Reset Eof
@@ -459,6 +591,7 @@ namespace KRCmotor {
     //% weight=90
     //% blockId=motor_PlayMotorStop block="再生 終了宣言"
     export function PlayMotorStop(): void {
+        serial.writeLine("Stop Playing")
         play_start_tm = 0
         eep_read_addr = 0
         EEPerr |= 1
@@ -504,25 +637,44 @@ namespace KRCmotor {
         if (eep_read_addr == 0) { //最初の読み込み
             play_start_tm = input.runningTime()
             //Magic numberのチェック
-            eep_markstr = read_word(eep_read_addr)
+            serial.writeLine("Start Playing 1st")
+            eep_markstr = eep_read_word(eep_read_addr)
             if (eep_markstr != 0x4b52) EEPerr = 2         // "KR"
+            serial.writeNumber(eep_markstr)
+            serial.writeString(",")
             eep_read_addr += 2
-            eep_markstr = read_word(eep_read_addr)
+            eep_markstr = eep_read_word(eep_read_addr)
             if (eep_markstr != 0x4320) EEPerr = 2       // "C "
+            serial.writeNumber(eep_markstr)
+            serial.writeString(">>")
+            serial.writeNumber(EEPerr)
+            serial.writeString("\n\r")
             eep_read_addr += 2
             read_next_control()
         }
         elapsed_tm = (input.runningTime() - play_start_tm) / 10
         if (elapsed_tm >= MAX_EEP_TIME) {		// 最大記録時間超過
             EEPerr |= 1
+            serial.writeString("OverMaxTime ")
+            serial.writeNumber(EEPerr)
+            serial.writeString("\n\r")
         }
         let retdata = 0x2000	// デフォルトは無効データ
         if (EEPerr == 0) {		// ready eeprom
             if (elapsed_tm >= eep_next_tm) {
+                serial.writeNumber(eep_read_addr)
+                serial.writeString(" Elapsed:")
+                serial.writeNumber(Math.trunc(elapsed_tm))
+                serial.writeString(" (")
+                serial.writeNumber(eep_next_tm)
+                serial.writeString(") Control:")
+                serial.writeNumber(eep_next_cont)
+                serial.writeString("\n\r")
                 retdata = eep_next_cont & 0x1fff	//有効データをセット
                 read_next_control()
                 if (eep_next_tm == 0) {
                     EEPerr |= 1
+                    serial.writeLine("Finished")
                 }
             }
         }
@@ -530,6 +682,8 @@ namespace KRCmotor {
             EEPerr |= 1
         }
         retdata |= (EEPerr << 14)
+        serial.writeNumber(retdata) // only debug
+        serial.writeString(",")     // only debug
         return retdata
     }
 
@@ -612,5 +766,4 @@ namespace KRCmotor {
         if (tmp) return true
         else return false
     }
-
 }

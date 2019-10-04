@@ -119,6 +119,27 @@ namespace KRCmotor {
     }
 
     /**
+     * Update all analog controller bit pattern without chattering
+     */
+    function set_swstatus_without_chattering(): boolean {
+        if (input.runningTime() - sw_last_detect_tm < 20) return false	//チャタリング除去間隔を経過したか？
+        sw_last_detect_tm = input.runningTime()		// 更新
+        // Check analog controller
+        // contrller 0
+        sw_cont0_3 = sw_cont0_2
+        sw_cont0_2 = sw_cont0_1
+        sw_cont0_1 = set_swdat_from_anadat(pins.analogReadPin(AnalogPin.P0))
+        if (sw_cont0_1 == sw_cont0_2 && sw_cont0_1 == sw_cont0_3) sw_cont0 = sw_cont0_1
+        // contrller 1
+        sw_cont1_3 = sw_cont1_2
+        sw_cont1_2 = sw_cont1_1
+        sw_cont1_1 = set_swdat_from_anadat(pins.analogReadPin(AnalogPin.P1))
+        if (sw_cont1_1 == sw_cont1_2 && sw_cont1_1 == sw_cont1_3) sw_cont1 = sw_cont1_1
+        sw_status = sw_cont1 * 16 + sw_cont0
+        return true
+    }
+
+    /**
      * write a word to special address
      * @param addr eeprom address, eg: 2
      * @param dat is the data will be write, eg: 6
@@ -188,23 +209,11 @@ namespace KRCmotor {
     //% blockId=motor_SW_detecting block="コントローラ入力あり?"
     export function SW_detecting(): boolean {
         let chg = 0
-        if (input.runningTime() - sw_last_detect_tm < 20) return false	//チャタリング除去間隔を経過したか？
-        sw_last_detect_tm = input.runningTime()		// 更新
-        // Check analog controller
-        // contrller 0
-        sw_cont0_3 = sw_cont0_2
-        sw_cont0_2 = sw_cont0_1
-        sw_cont0_1 = set_swdat_from_anadat(pins.analogReadPin(AnalogPin.P0))
-        if (sw_cont0_1 == sw_cont0_2 && sw_cont0_1 == sw_cont0_3) sw_cont0 = sw_cont0_1
-        // contrller 1
-        sw_cont1_3 = sw_cont1_2
-        sw_cont1_2 = sw_cont1_1
-        sw_cont1_1 = set_swdat_from_anadat(pins.analogReadPin(AnalogPin.P1))
-        if (sw_cont1_1 == sw_cont1_2 && sw_cont1_1 == sw_cont1_3) sw_cont1 = sw_cont1_1
-        sw_status = sw_cont1 * 16 + sw_cont0
-        chg = sw_status ^ sw_last_status
-        sw_last_status = sw_status
-        if (chg) return true
+        if( set_swstatus_without_chattering() ){
+            chg = sw_status ^ sw_last_status
+            sw_last_status = sw_status
+            if (chg) return true
+        }
         return false
     }
 
@@ -225,10 +234,11 @@ namespace KRCmotor {
      *     +------------------右D
     */
     //% weight=90
-    //% blockId=motor_SW_detecting block="コントローラデータ"
+    //% blockId=motor_SW_data block="コントローラデータ"
     export function ControllerButtonData(): number {
         // アナログコントローラのボタンデータを返す
         //  SW_detecting()で検出されたボタンデータのみを返す
+        set_swstatus_without_chattering()
         return (sw_status & 0xff)
     }
 

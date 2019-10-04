@@ -118,54 +118,6 @@ namespace KRCmotor {
         return 0						//B0000;// NC
     }
 
-    //% weight=90
-    //% blockId=motor_SW_detecting block="コントローラ入力あり?"
-    export function SW_detecting(): boolean {
-        let chg = 0
-        if (input.runningTime() - sw_last_detect_tm < 20) return false	//チャタリング除去間隔を経過したか？
-        sw_last_detect_tm = input.runningTime()		// 更新
-        // Check analog controller
-        // contrller 0
-        sw_cont0_3 = sw_cont0_2
-        sw_cont0_2 = sw_cont0_1
-        sw_cont0_1 = set_swdat_from_anadat(pins.analogReadPin(AnalogPin.P0))
-        if (sw_cont0_1 == sw_cont0_2 && sw_cont0_1 == sw_cont0_3) sw_cont0 = sw_cont0_1
-        // contrller 1
-        sw_cont1_3 = sw_cont1_2
-        sw_cont1_2 = sw_cont1_1
-        sw_cont1_1 = set_swdat_from_anadat(pins.analogReadPin(AnalogPin.P1))
-        if (sw_cont1_1 == sw_cont1_2 && sw_cont1_1 == sw_cont1_3) sw_cont1 = sw_cont1_1
-        sw_status = sw_cont1 * 16 + sw_cont0
-        chg = sw_status ^ sw_last_status
-        sw_last_status = sw_status
-        if (chg) return true
-        return false
-    }
-
-	/*
-	 * 最新のコントロールパッドのスイッチデータを返す
-     * 8ビットのビットパターンになっていて、複数ボタンの情報がわかる
-     *      A                        
-     *   C  +  D →→→　D C B A
-     *      B    
-     * bit:7 6 5 4 3 2 1 0
-     *     | | | | | | | +----左A
-     *     | | | | | | +------左B
-     *     | | | | | +--------左C
-     *     | | | | +----------左D
-     *     | | | +------------右A
-     *     | | +--------------右B
-     *     | +----------------右C
-     *     +------------------右D
-    */
-    //% weight=90
-    //% blockId=motor_SW_detecting block="コントローラデータ"
-    export function ControllerButtonData(): number {
-        // アナログコントローラのボタンデータを返す
-        //  SW_detecting()で検出されたボタンデータのみを返す
-        return (sw_status & 0xff)
-    }
-
     /**
      * write a word to special address
      * @param addr eeprom address, eg: 2
@@ -230,6 +182,54 @@ namespace KRCmotor {
             pins.analogSetPeriod(AnalogPin.P2, 20)	//50KHz
             let pwm4init = true
         }
+    }
+
+    //% weight=90
+    //% blockId=motor_SW_detecting block="コントローラ入力あり?"
+    export function SW_detecting(): boolean {
+        let chg = 0
+        if (input.runningTime() - sw_last_detect_tm < 20) return false	//チャタリング除去間隔を経過したか？
+        sw_last_detect_tm = input.runningTime()		// 更新
+        // Check analog controller
+        // contrller 0
+        sw_cont0_3 = sw_cont0_2
+        sw_cont0_2 = sw_cont0_1
+        sw_cont0_1 = set_swdat_from_anadat(pins.analogReadPin(AnalogPin.P0))
+        if (sw_cont0_1 == sw_cont0_2 && sw_cont0_1 == sw_cont0_3) sw_cont0 = sw_cont0_1
+        // contrller 1
+        sw_cont1_3 = sw_cont1_2
+        sw_cont1_2 = sw_cont1_1
+        sw_cont1_1 = set_swdat_from_anadat(pins.analogReadPin(AnalogPin.P1))
+        if (sw_cont1_1 == sw_cont1_2 && sw_cont1_1 == sw_cont1_3) sw_cont1 = sw_cont1_1
+        sw_status = sw_cont1 * 16 + sw_cont0
+        chg = sw_status ^ sw_last_status
+        sw_last_status = sw_status
+        if (chg) return true
+        return false
+    }
+
+	/*
+	 * 最新のコントロールパッドのスイッチデータを返す
+     * 8ビットのビットパターンになっていて、複数ボタンの情報がわかる
+     *      A                        
+     *   C  +  D →→→　D C B A
+     *      B    
+     * bit:7 6 5 4 3 2 1 0
+     *     | | | | | | | +----左A
+     *     | | | | | | +------左B
+     *     | | | | | +--------左C
+     *     | | | | +----------左D
+     *     | | | +------------右A
+     *     | | +--------------右B
+     *     | +----------------右C
+     *     +------------------右D
+    */
+    //% weight=90
+    //% blockId=motor_SW_detecting block="コントローラデータ"
+    export function ControllerButtonData(): number {
+        // アナログコントローラのボタンデータを返す
+        //  SW_detecting()で検出されたボタンデータのみを返す
+        return (sw_status & 0xff)
     }
 
     //% weight=90

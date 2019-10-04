@@ -20,34 +20,34 @@ KRCのマイクロビットボードのモータドライブコントロール�
 
 ## ブロック
 ### 1.モーターON/OFF
-![image](KRCmotorOn01.png)
+![image](KRCmotorOn01.png)<BR>
 制御したいモータ番号を選択<BR>
-![image](KRCmotorOn02.png)
+![image](KRCmotorOn02.png)<BR>
 回転方向を選択<BR>
 
 ### 2.モータースピード制御
-![image](KRCmotorSpeed01.png)
+![image](KRCmotorSpeed01.png)<BR>
 スピード制御したいモータ番号を選択<BR>
-![image](KRCmotorSpeed02.png)
+![image](KRCmotorSpeed02.png)<BR>
 回転方向を選択<BR>
 Speedは０(停止)～1023(最大速度）を入力<BR>
 
 ### 3.モーター停止
-![image](KRCmotorStop.png)
+![image](KRCmotorStop.png)<BR>
 停止したいモータ番号を選択<BR>
 
 ### 4.モーター一括ON/OFF
-![image](KRCmotorWhole.png)
+![image](KRCmotorWhole.png)<BR>
 一度に全モーターのON/OFFを行う<BR>
 ４つのモーターを一度に設定したいときに１行でできる<BR>
 データは「モーター一括データ作成」で作成された形式<BR>
 
 ### 5.モーター一括データ作成
-![image](KRCMakeMotorData.png)
+![image](KRCMakeMotorData.png)<BR>
 モーターの一括データを作成する<BR>
 
 ### 6.モーター操作記録
-![image](KRCrecord.png)
+![image](KRCrecord.png)<BR>
 時間とモーター操作データをEEPROMに記録<BR>
 記録開始宣言～記録終了宣言の間に、操作されるごとに記録操作を入れると、その時の操作時間とともに操作データが記録される<BR>
 操作データは「モーター一括データ作成」で作成された形式<BR><BR>
@@ -57,7 +57,7 @@ Speedは０(停止)～1023(最大速度）を入力<BR>
 ※最大記録時間は 655秒　最大記録操作数 16381<BR>
 
 ### 7.モーター操作再生
-![image](KRCplay.png)
+![image](KRCplay.png)<BR>
 EEPROMに記録されたモーター操作記録を再生する<BR>
 開始宣言でタイマーがリセットされ、再生準備ができる<BR>
 再生開始宣言～再生終了宣言の間に、再生データ読み込みを行うと、操作した時間になったときに有効なデータが返され、それ以外は無効なデータが返される<BR>
@@ -66,10 +66,36 @@ EEPROMに記録されたモーター操作記録を再生する<BR>
 データが終わったかどうかは、再生OK？で確認する<BR><BR>
 ※EEPがおかしい場合はすぐに再生OK？がfalseになる<BR>
 
+### 8.コントローラパッド入力
+専用のコントロールパッドの入力を行う<BR>
+
+![image](KRCcontroller0.jpg)<BR>
+
+| bit  | ボタン |      | bit  | モーター |
+| ---- | ------ | ---- | ---- | -------- |
+| 7    |    H    |      | 7    | モーター4逆転 |
+| 6    |    G   |      | 6    | モーター4正転 |
+| 5    |    F   |      | 5    | モーター3逆転 |
+| 4    |    E   |      | 4    | モーター3正転 |
+| 3    |    D    |      | 3    | モーター2逆転 |
+| 2    |    C    |      | 2    | モーター2正転 |
+| 1    |    B    |      | 1    |   モーター１逆転       |
+| 0    |    A    |      | 0    |   モーター１正転      |
+
+データはビットパターンで入っていて上記の通りモーター制御のビットパターンとは異なる<BR>
+
+ボタンとモーターが一致するならば、そのまま<BR>
+![image](KRCcontroller.png)<BR>
+でよいが、実際には違うので、モーターのビットパターンに変換する必要がある<BR>
+![image](KRCcontroller2.png)<BR>
+
+
 
 ## ライセンス
 
 GNU
+
+Bitcom
 
 ## 注意点
 

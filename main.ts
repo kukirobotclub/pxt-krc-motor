@@ -225,7 +225,7 @@ namespace KRCmotor {
      *     +------------------右D
     */
     //% weight=90
-    //% blockId=motor_SW_detecting block="コントローラデータ"
+    //% blockId=motor_SW_data block="コントローラデータ"
     export function ControllerButtonData(): number {
         // アナログコントローラのボタンデータを返す
         //  SW_detecting()で検出されたボタンデータのみを返す

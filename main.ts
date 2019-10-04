@@ -209,7 +209,7 @@ namespace KRCmotor {
     //% blockId=motor_SW_detecting block="コントローラ入力あり?"
     export function SW_detecting(): boolean {
         let chg = 0
-        if( set_swstatus_without_chattering() ){
+        if (set_swstatus_without_chattering()) {
             chg = sw_status ^ sw_last_status
             sw_last_status = sw_status
             if (chg) return true

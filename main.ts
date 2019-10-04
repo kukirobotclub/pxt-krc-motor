@@ -38,28 +38,10 @@ namespace KRCmotor {
         REV = 2
     }
 
-    /* IOエキスパンダのポート選択 */
-    export enum IoPortNo {
-        P0 = 0x0,
-        P1 = 0x1,
-        P2 = 0x2,
-        P3 = 0x3,
-        P4 = 0x4,
-        P5 = 0x5,
-        P6 = 0x6,
-        P7 = 0x7
-    }
-
-    export enum AnalogPortNo {
-        P0 = 0x0,
-        P1 = 0x1,
-        P2 = 0x2
-    }
-
     /* EEPROM の定義 */
     const EEPROM_I2C_ADDR = 80	// EEPのI2Cアドレス
     const MAX_EEP_TIME = 65500	// EEP最大記録時間 655秒
-    const MAX_EEP_ADDR = 65530	// EEP最大アドレス 65530 byte　16381.5 dword
+    const MAX_EEP_ADDR = 32760	// EEP最大アドレス 32760 byte　8190 dword
     let EEPerr = 0				// eepromの状態　0:OK 1:EOF 2:Error
     let eep_write_addr = 0		// EEPROMの書き込みアドレス
     let eep_read_addr = 0		// EEPROMの読み込みアドレス
@@ -77,12 +59,8 @@ namespace KRCmotor {
     let pwm3init = false
     let pwm4init = false
 
-    /* IOエキスパンダの定義 */
-    const IOEXPANDER_I2C_ADDR = 32	// IOEXPANDERのI2Cアドレス PCF8574
-    let ioexpander_ready = false	// 設定済み
-    let ioexpander_dir = 0xff		// 入出力設定　1:IN 0:OUT
-
     /* コントロールパッドのチャタリング除去 */
+    let use_controller = false  // コントローラ利用中フラグ　モータとの重複を防ぐ
     let sw_cont0_3 = 0
     let sw_cont0_2 = 0
     let sw_cont0_1 = 0
@@ -124,6 +102,7 @@ namespace KRCmotor {
     function set_swstatus_without_chattering(): boolean {
         if (input.runningTime() - sw_last_detect_tm < 20) return false	//チャタリング除去間隔を経過したか？
         sw_last_detect_tm = input.runningTime()		// 更新
+        use_controller = true
         // Check analog controller
         // contrller 0
         sw_cont0_3 = sw_cont0_2
@@ -198,7 +177,7 @@ namespace KRCmotor {
             pins.analogSetPeriod(AnalogPin.P16, 20)	//50KHz
             let pwm3init = true
         }
-        if (index == 4) {
+        if (use_controller == false && index == 4) {
             pins.analogSetPeriod(AnalogPin.P1, 20)	//50KHz
             pins.analogSetPeriod(AnalogPin.P2, 20)	//50KHz
             let pwm4init = true
@@ -281,7 +260,7 @@ namespace KRCmotor {
                 pins.digitalWritePin(DigitalPin.P16, 0)
             }
         }
-        if (index == 4) {	//Motor4
+        if (use_controller == false && index == 4) {	//Motor4
             if (direction == 1) {
                 pins.digitalWritePin(DigitalPin.P1, 1)
                 pins.digitalWritePin(DigitalPin.P2, 0)
@@ -350,7 +329,7 @@ namespace KRCmotor {
                 pins.digitalWritePin(DigitalPin.P16, 0)
             }
         }
-        if (index == 4) {	//Motor4
+        if (use_controller == false && index == 4) {	//Motor4
             if (!pwm4init) {
                 initPwm(4)
             }
@@ -382,7 +361,7 @@ namespace KRCmotor {
             pins.digitalWritePin(DigitalPin.P15, 0)
             pins.digitalWritePin(DigitalPin.P16, 0)
         }
-        if (index == 4) {	//Motor4
+        if (use_controller == false && index == 4) {	//Motor4
             pins.digitalWritePin(DigitalPin.P1, 0)
             pins.digitalWritePin(DigitalPin.P2, 0)
         }
@@ -433,10 +412,12 @@ namespace KRCmotor {
         } else {
             pins.digitalWritePin(DigitalPin.P1, 0)
         }
-        if (motorall & 128) {	//Motor4-2
-            pins.digitalWritePin(DigitalPin.P2, 1)
-        } else {
-            pins.digitalWritePin(DigitalPin.P2, 0)
+        if (use_controller == false) {
+            if (motorall & 128) {	//Motor4-2
+                pins.digitalWritePin(DigitalPin.P2, 1)
+            } else {
+                pins.digitalWritePin(DigitalPin.P2, 0)
+            }
         }
     }
 
@@ -695,85 +676,5 @@ namespace KRCmotor {
         serial.writeNumber(retdata) // only debug
         serial.writeString(",")     // only debug
         return retdata
-    }
-
-    /**
-     * IO Expander PCF8574N IN/OUT setting
-     */
-    //% blockId=motor_IoExpInit block="拡張IO初期化|P7 %p7|P6 %p6|P5 %p5|P4 %p4|P3 %p3|P2 %p2|P1 %p1|P0 %p0"
-    //% p7.shadow="toggleOnOff"
-    //% p6.shadow="toggleOnOff"
-    //% p5.shadow="toggleOnOff"
-    //% p4.shadow="toggleOnOff"
-    //% p3.shadow="toggleOnOff"
-    //% p2.shadow="toggleOnOff"
-    //% p1.shadow="toggleOnOff"
-    //% p0.shadow="toggleOnOff"
-    export function IoExpInit(p7: boolean, p6: boolean, p5: boolean, p4: boolean, p3: boolean, p2: boolean, p1: boolean, p0: boolean): void {
-        if (p7) ioexpander_dir |= 0x80
-        else ioexpander_dir &= 0x7f
-        if (p6) ioexpander_dir |= 0x40
-        else ioexpander_dir &= 0xbf
-        if (p5) ioexpander_dir |= 0x20
-        else ioexpander_dir &= 0xdf
-        if (p4) ioexpander_dir |= 0x10
-        else ioexpander_dir &= 0xef
-        if (p3) ioexpander_dir |= 0x08
-        else ioexpander_dir &= 0xf7
-        if (p2) ioexpander_dir |= 0x04
-        else ioexpander_dir &= 0xfb
-        if (p1) ioexpander_dir |= 0x02
-        else ioexpander_dir &= 0xfd
-        if (p0) ioexpander_dir |= 0x01
-        else ioexpander_dir &= 0xfe
-        pins.i2cWriteNumber(
-            IOEXPANDER_I2C_ADDR,
-            ioexpander_dir,
-            NumberFormat.UInt8LE,
-            false
-        )
-        ioexpander_ready = true	// 設定済み
-    }
-
-    /**
-     * IO Expander PCF8574N OUT command
-     */
-    //% weight=90
-    //% blockId=motor_IoExpOut block="拡張IO出力 %port = %onoff"
-    //% onoff.shadow="toggleOnOff"
-    export function IoExpOut(port: IoPortNo, onoff: boolean): void {
-        let tmp = 1 << port
-        if (ioexpander_dir & tmp) {
-            return		// Error setting is IN
-        }
-        if (onoff) {
-            tmp |= pins.i2cReadNumber(IOEXPANDER_I2C_ADDR, NumberFormat.UInt8LE, false)
-            tmp |= ioexpander_dir
-        } else {
-            tmp = ~tmp
-            tmp &= pins.i2cReadNumber(IOEXPANDER_I2C_ADDR, NumberFormat.UInt8LE, false)
-            tmp |= ioexpander_dir
-        }
-        pins.i2cWriteNumber(
-            IOEXPANDER_I2C_ADDR,
-            tmp,
-            NumberFormat.UInt8LE,
-            false
-        )
-    }
-
-    /**
-     * IO Expander PCF8574N IN command
-     */
-    //% weight=90
-    //% blockId=motor_IoExpIn block="拡張IO入力 %port"
-    export function IoExpIn(port: IoPortNo): boolean {
-        let tmp = 1 << port
-        if ((ioexpander_dir & tmp) == 0) {
-            return false	// Error setting is OUT
-        }
-        tmp &= pins.i2cReadNumber(IOEXPANDER_I2C_ADDR, NumberFormat.UInt8LE, false)
-        if (tmp) return true
-        else return false
     }
 }

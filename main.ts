@@ -189,10 +189,14 @@ namespace KRCmotor {
             pins.analogSetPeriod(AnalogPin.P16, 20)	//50KHz
             let pwm3init = true
         }
-        if (use_controller == false && index == 4) {
-            pins.analogSetPeriod(AnalogPin.P1, 20)	//50KHz
-            pins.analogSetPeriod(AnalogPin.P2, 20)	//50KHz
-            let pwm4init = true
+        if (index == 4) {
+            if (use_controller == false) {
+                pins.analogSetPeriod(AnalogPin.P1, 20)	//50KHz
+                pins.analogSetPeriod(AnalogPin.P2, 20)	//50KHz
+                let pwm4init = true
+            } else {
+                serial.writeString("Disabled M4\n\r")
+            }
         }
     }
 
@@ -280,16 +284,20 @@ namespace KRCmotor {
                 pins.digitalWritePin(DigitalPin.P16, 0)
             }
         }
-        if (use_controller == false && index == 4) {	//Motor4
-            if (direction == 1) {
-                pins.digitalWritePin(DigitalPin.P1, 1)
-                pins.digitalWritePin(DigitalPin.P2, 0)
-            } else if (direction == 2) {
-                pins.digitalWritePin(DigitalPin.P1, 0)
-                pins.digitalWritePin(DigitalPin.P2, 1)
+        if (index == 4) {	//Motor4
+            if (use_controller == false) {
+                if (direction == 1) {
+                    pins.digitalWritePin(DigitalPin.P1, 1)
+                    pins.digitalWritePin(DigitalPin.P2, 0)
+                } else if (direction == 2) {
+                    pins.digitalWritePin(DigitalPin.P1, 0)
+                    pins.digitalWritePin(DigitalPin.P2, 1)
+                } else {
+                    pins.digitalWritePin(DigitalPin.P1, 0)
+                    pins.digitalWritePin(DigitalPin.P2, 0)
+                }
             } else {
-                pins.digitalWritePin(DigitalPin.P1, 0)
-                pins.digitalWritePin(DigitalPin.P2, 0)
+                serial.writeString("Disabled M4\n\r")
             }
         }
     }
@@ -349,19 +357,23 @@ namespace KRCmotor {
                 pins.digitalWritePin(DigitalPin.P16, 0)
             }
         }
-        if (use_controller == false && index == 4) {	//Motor4
-            if (!pwm4init) {
-                initPwm(4)
-            }
-            if (direction == 1) {
-                pins.analogWritePin(AnalogPin.P1, speed)
-                pins.digitalWritePin(DigitalPin.P2, 0)
-            } else if (direction == 2) {
-                pins.digitalWritePin(DigitalPin.P1, 0)
-                pins.analogWritePin(AnalogPin.P2, speed)
+        if (index == 4) {	//Motor4
+            if (use_controller == false) {
+                if (!pwm4init) {
+                    initPwm(4)
+                }
+                if (direction == 1) {
+                    pins.analogWritePin(AnalogPin.P1, speed)
+                    pins.digitalWritePin(DigitalPin.P2, 0)
+                } else if (direction == 2) {
+                    pins.digitalWritePin(DigitalPin.P1, 0)
+                    pins.analogWritePin(AnalogPin.P2, speed)
+                } else {
+                    pins.digitalWritePin(DigitalPin.P1, 0)
+                    pins.digitalWritePin(DigitalPin.P2, 0)
+                }
             } else {
-                pins.digitalWritePin(DigitalPin.P1, 0)
-                pins.digitalWritePin(DigitalPin.P2, 0)
+                serial.writeString("Disabled M4\n\r")
             }
         }
     }
@@ -381,9 +393,13 @@ namespace KRCmotor {
             pins.digitalWritePin(DigitalPin.P15, 0)
             pins.digitalWritePin(DigitalPin.P16, 0)
         }
-        if (use_controller == false && index == 4) {	//Motor4
-            pins.digitalWritePin(DigitalPin.P1, 0)
-            pins.digitalWritePin(DigitalPin.P2, 0)
+        if (index == 4) {	//Motor4
+            if (use_controller == false) {
+                pins.digitalWritePin(DigitalPin.P1, 0)
+                pins.digitalWritePin(DigitalPin.P2, 0)
+            } else {
+                serial.writeString("Disabled M4\n\r")
+            }
         }
     }
 

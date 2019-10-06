@@ -38,6 +38,18 @@ namespace KRCmotor {
         REV = 2
     }
 
+    /* コントロールパッドのボタンの選択 */
+    export enum ControllerSw {
+        SWA = 0x1,
+        SWB = 0x2,
+        SWC = 0x4,
+        SWD = 0x8,
+        SWE = 0x10,
+        SWF = 0x20,
+        SWG = 0x40,
+        SWH = 0x80
+    }
+
     /* EEPROM の定義 */
     const EEPROM_I2C_ADDR = 80	// EEPのI2Cアドレス
     const MAX_EEP_TIME = 65500	// EEP最大記録時間 655秒
@@ -219,6 +231,14 @@ namespace KRCmotor {
         //  SW_detecting()で検出されたボタンデータのみを返す
         set_swstatus_without_chattering()
         return (sw_status & 0xff)
+    }
+
+    //% weight=90
+    //% blockId=motor_SW_bit block="コントローラ押されているか？ SWBIT|%ControllerSw"
+    //% inlineInputMode=inline
+    export function ControllerButtonBit(SwBit: ControllerSw): boolean {
+        if (sw_status & SwBit) return true
+        return false
     }
 
     //% weight=90

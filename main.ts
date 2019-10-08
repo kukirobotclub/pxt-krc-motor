@@ -56,6 +56,7 @@ namespace KRCmotor {
     const MAX_EEP_ADDR = 32760	// EEP最大アドレス 32760 byte　8190 dword
     let EEPerr = 0				// eepromの状態　0:OK 1:EOF 2:Error
     let eep_write_addr = 0		// EEPROMの書き込みアドレス
+    let eep_mode = 0    		// 状態 0:待機 1:読み込み 2:書き込み
     let eep_read_addr = 0		// EEPROMの読み込みアドレス
     let rec_start_tm = 0		// 記録時の開始時間
     let play_start_tm = 0		// 再生時の開始時間
@@ -484,6 +485,10 @@ namespace KRCmotor {
     //% weight=90
     //% blockId=motor_RecMotorStart block="記録 開始宣言"
     export function RecMotorStart(): void {
+        if (eep_mode) {
+            serial.writeLine("Using EEP")
+            return
+        }
         rec_start_tm = input.runningTime()
         eep_write_addr = 0
         last_controls = 0
@@ -494,13 +499,16 @@ namespace KRCmotor {
     //% weight=90
     //% blockId=motor_RecMotorStop block="記録 終了宣言"
     export function RecMotorStop(): void {
-        EEPerr |= 1
-        rec_start_tm = 0
-        serial.writeLine("Stop Recording")
-        eep_write_word(eep_write_addr, 0)
-        eep_write_addr += 2
-        eep_write_word(eep_write_addr, 0xffff)
-        last_controls = 0
+        if (eep_mode == 2) {
+            EEPerr |= 1
+            rec_start_tm = 0
+            serial.writeLine("Stop Recording")
+            eep_write_word(eep_write_addr, 0)
+            eep_write_addr += 2
+            eep_write_word(eep_write_addr, 0xffff)
+            last_controls = 0
+            eep_mode = 0
+        }
     }
 
     /*
@@ -531,6 +539,7 @@ namespace KRCmotor {
     //% control.min=0 control.max=255 control.defl=0
     //% mode.min=0 mode.max=31 mode.defl=0
     export function RecMotorData(control: number, mode: number): void {
+        if (eep_mode != 2) return   // not write mode
         if (EEPerr) return      // Error
         if (eep_write_addr == 0) { //最初の書き込み
             last_controls = 0
@@ -609,6 +618,10 @@ namespace KRCmotor {
     //% weight=90
     //% blockId=motor_PlayMotorStart block="再生 開始宣言"
     export function PlayMotorStart(): void {
+        if (eep_mode) {
+            serial.writeLine("Using EEP")
+            return
+        }
         serial.writeLine("Start Playing")
         play_start_tm = input.runningTime()
         eep_read_addr = 0
@@ -618,15 +631,18 @@ namespace KRCmotor {
     //% weight=90
     //% blockId=motor_PlayMotorStop block="再生 終了宣言"
     export function PlayMotorStop(): void {
-        serial.writeLine("Stop Playing")
-        play_start_tm = 0
-        eep_read_addr = 0
-        EEPerr |= 1
+        if (eep_mode == 1) {
+            serial.writeLine("Stop Playing")
+            play_start_tm = 0
+            eep_read_addr = 0
+            EEPerr |= 1
+        }
     }
     // データ継続か（EOFのチェック）
     //% weight=90
     //% blockId=motor_PlayMotorOk block="再生 Ok?"
     export function PlayMotorOk(): boolean {
+        if (eep_mode != 1) return false
         if (EEPerr) {
             return false
         } else {
@@ -661,6 +677,7 @@ namespace KRCmotor {
     //% weight=90
     //% blockId=motor_PlayMotorData block="再生 データ読み込み"
     export function PlayMotorData(): number {
+        if (eep_mode != 1) return 0x8000    // EEPerr = 2
         if (eep_read_addr == 0) { //最初の読み込み
             play_start_tm = input.runningTime()
             //Magic numberのチェック

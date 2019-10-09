@@ -494,6 +494,7 @@ namespace KRCmotor {
         last_controls = 0
         EEPerr &= 0xfe          // Reset Eof
         serial.writeLine("Start Recording")
+        eep_mode = 2
     }
     // 記録停止
     //% weight=90
@@ -626,6 +627,7 @@ namespace KRCmotor {
         play_start_tm = input.runningTime()
         eep_read_addr = 0
         EEPerr &= 0xfe          // Reset Eof
+        eep_mode = 1
     }
     // 再生停止
     //% weight=90

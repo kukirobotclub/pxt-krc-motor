@@ -728,8 +728,8 @@ namespace KRCmotor {
             EEPerr |= 1
         }
         retdata |= (EEPerr << 14)
-        serial.writeNumber(retdata) // only debug
-        serial.writeString(",")     // only debug
+        //serial.writeNumber(retdata) // only debug
+        //serial.writeString(",")     // only debug
         return retdata
     }
 }

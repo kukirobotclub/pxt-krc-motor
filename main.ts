@@ -50,6 +50,12 @@ namespace KRCmotor {
         SWH = 0x80
     }
 
+    /* コントロールパッドのビット定義 */
+    export enum BitOnOff {
+        OFF = 0,
+        ON = 1
+    }
+
     /* EEPROM の定義 */
     const EEPROM_I2C_ADDR = 80	// EEPのI2Cアドレス
     const MAX_EEP_TIME = 65500	// EEP最大記録時間 655秒
@@ -241,9 +247,17 @@ namespace KRCmotor {
     //% weight=90
     //% blockId=motor_SW_bit block="コントローラ押されているか？ SWBIT|%ControllerSw"
     //% inlineInputMode=inline
-    export function ControllerButtonBit(SwBit: ControllerSw): boolean {
+    export function isControllerButtonBit(SwBit: ControllerSw): boolean {
         if (sw_status & SwBit) return true
         return false
+    }
+
+    //% weight=90
+    //% blockId=motor_bit_on_off block="ビット設定|%val|SWBIT|%ControllerSw|設定|%BitOnOff"
+    //% inlineInputMode=inline
+    export function ButtonBitOnOff(val: number, SwBit: ControllerSw, OnOff: BitOnOff): number {
+        if (OnOff) return val | SwBit
+        else return val & ~SwBit
     }
 
     //% weight=90
@@ -638,12 +652,13 @@ namespace KRCmotor {
             play_start_tm = 0
             eep_read_addr = 0
             EEPerr |= 1
+            eep_mode = 0
         }
     }
     // データ継続か（EOFのチェック）
     //% weight=90
     //% blockId=motor_PlayMotorOk block="再生 Ok?"
-    export function PlayMotorOk(): boolean {
+    export function isPlayMotorOk(): boolean {
         if (eep_mode != 1) return false
         if (EEPerr) {
             return false

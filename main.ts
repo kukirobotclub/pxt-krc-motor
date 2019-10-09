@@ -245,7 +245,7 @@ namespace KRCmotor {
     }
 
     //% weight=90
-    //% blockId=motor_SW_bit block="コントローラ押されているか？ SWBIT|%ControllerSw"
+    //% blockId=motor_SW_bit block="コントローラ押されているか？ ボタン|%ControllerSw"
     //% inlineInputMode=inline
     export function isControllerButtonBit(SwBit: ControllerSw): boolean {
         if (sw_status & SwBit) return true
@@ -253,7 +253,7 @@ namespace KRCmotor {
     }
 
     //% weight=90
-    //% blockId=motor_bit_on_off block="ビット設定|%val|SWBIT|%ControllerSw|設定|%BitOnOff"
+    //% blockId=motor_bit_on_off block="ボタンデータ設定|%val|のボタン|%ControllerSw|を設定|%BitOnOff"
     //% inlineInputMode=inline
     export function ButtonBitOnOff(val: number, SwBit: ControllerSw, OnOff: BitOnOff): number {
         if (OnOff) return val | SwBit

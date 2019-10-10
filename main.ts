@@ -253,7 +253,7 @@ namespace KRCmotor {
     }
 
     //% weight=90
-    //% blockId=motor_bit_on_off block="ボタンデータ設定|%val|のボタン|%ControllerSw|を設定|%BitOnOff"
+    //% blockId=motor_bit_on_off block="ボタンデータ|%val|のボタン|%ControllerSw|を設定|%BitOnOff"
     //% inlineInputMode=inline
     export function ButtonBitOnOff(val: number, SwBit: ControllerSw, OnOff: BitOnOff): number {
         if (OnOff) return val | SwBit

@@ -5,6 +5,7 @@
  *
  * Version 2019-06-02 0.20
  * Version 2019-10-01 0.30 Add Control-Pad
+ * Version 2019-10-16 0.40 Add EEP function area
 */
 //% weight=10 color=#ADB367 icon="\f085" block="KRC-TOOL"
 namespace KRCmotor {
@@ -60,6 +61,7 @@ namespace KRCmotor {
     const EEPROM_I2C_ADDR = 80	// EEPのI2Cアドレス
     const MAX_EEP_TIME = 65500	// EEP最大記録時間 655秒
     const MAX_EEP_ADDR = 32760	// EEP最大アドレス 32760 byte　8190 dword
+    const FUNC_EEP_ADDR = 32764	// EEPファンクション記録アドレス 32764-7 7FF8h-7FFFh 4byte
     let EEPerr = 0				// eepromの状態　0:OK 1:EOF 2:Error
     let eep_write_addr = 0		// EEPROMの書き込みアドレス
     let eep_mode = 0    		// 状態 0:待機 1:読み込み 2:書き込み
@@ -135,6 +137,27 @@ namespace KRCmotor {
         if (sw_cont1_1 == sw_cont1_2 && sw_cont1_1 == sw_cont1_3) sw_cont1 = sw_cont1_1
         sw_status = sw_cont1 * 16 + sw_cont0
         return true
+    }
+
+    /**
+     * write a byte to special address
+     * @param addr eeprom address, eg: 2
+     * @param dat is the data will be write, eg: 6
+     */
+    function eep_write_byte(addr: number, dat: number): void {
+        let buf = pins.createBuffer(3)
+        buf[0] = addr >> 8
+        buf[1] = addr
+        buf[2] = dat
+        pins.i2cWriteBuffer(EEPROM_I2C_ADDR, buf)
+    }
+    /**
+     * read a byte from special address
+     * @param addr eeprom address, eg: 2
+     */
+    function eep_read_byte(addr: number): number {
+        pins.i2cWriteNumber(EEPROM_I2C_ADDR, addr, NumberFormat.UInt16BE)
+        return pins.i2cReadNumber(EEPROM_I2C_ADDR, NumberFormat.UInt8BE)
     }
 
     /**
@@ -235,7 +258,7 @@ namespace KRCmotor {
      *     | +----------------右C
      *     +------------------右D
     */
-    //% weight=90
+    //% weight=91
     //% blockId=motor_SW_data block="コントローラデータ"
     export function ControllerButtonData(): number {
         // アナログコントローラのボタンデータを返す
@@ -244,7 +267,7 @@ namespace KRCmotor {
         return (sw_status & 0xff)
     }
 
-    //% weight=90
+    //% weight=92
     //% blockId=motor_SW_bit block="コントローラ押されているか？ ボタン|%ControllerSw"
     //% inlineInputMode=inline
     export function isControllerButtonBit(SwBit: ControllerSw): boolean {
@@ -252,15 +275,15 @@ namespace KRCmotor {
         return false
     }
 
-    //% weight=90
-    //% blockId=motor_bit_on_off block="ボタンデータ|%val|のボタン|%ControllerSw|を設定|%BitOnOff"
+    //% weight=93
+    //% blockId=motor_bit_on_off block="ボタンデータ設定|%val|のボタン|%ControllerSw|を設定|%BitOnOff"
     //% inlineInputMode=inline
     export function ButtonBitOnOff(val: number, SwBit: ControllerSw, OnOff: BitOnOff): number {
         if (OnOff) return val | SwBit
         else return val & ~SwBit
     }
 
-    //% weight=90
+    //% weight=60
     //% blockId=motor_MotorOnOff block="モータON|%index|動作|%Dir"
     export function MotorOnOff(index: Motors, direction: Dir): void {
         if (index == 1) {	//Motor1
@@ -317,7 +340,7 @@ namespace KRCmotor {
         }
     }
 
-    //% weight=90
+    //% weight=65
     //% blockId=motor_MotorSpeed block="モータスピード|%index|動作|%Dir|スピード|%speed"
     //% speed.min=0 speed.max=1023
     export function MotorSpeed(index: Motors, direction: Dir, speed: number): void {
@@ -393,7 +416,7 @@ namespace KRCmotor {
         }
     }
 
-    //% weight=90
+    //% weight=61
     //% blockId=motor_MotorStop block="モータ停止|%index"
     export function MotorStop(index: Motors): void {
         if (index == 1) {	//Motor1
@@ -418,7 +441,7 @@ namespace KRCmotor {
         }
     }
 
-    //% weight=90
+    //% weight=62
     //% blockId=motor_MotorWhole block="モータ一括ON|%motorall"
     export function MotorWhole(motorall: number): void {
         serial.writeString("MotorWhole=")
@@ -479,7 +502,7 @@ namespace KRCmotor {
      * @param Motor3 motor direction 
      * @param Motor4 motor direction 
      */
-    //% weight=90
+    //% weight=63
     //% blockId=motor_MakeMotorData block="モータデータ作成 M1|%Dir|M2|%Dir1|M3|%Dir2|M4|%Dir3"
     //% inlineInputMode=inline
     export function MakeMotorData(Motor1: Dir, Motor2: Dir1, Motor3: Dir2, Motor4: Dir3): number {
@@ -496,7 +519,7 @@ namespace KRCmotor {
     }
 
     // 記録開始
-    //% weight=90
+    //% weight=70
     //% blockId=motor_RecMotorStart block="記録 開始宣言"
     export function RecMotorStart(): void {
         if (eep_mode) {
@@ -511,7 +534,7 @@ namespace KRCmotor {
         eep_mode = 2
     }
     // 記録停止
-    //% weight=90
+    //% weight=72
     //% blockId=motor_RecMotorStop block="記録 終了宣言"
     export function RecMotorStop(): void {
         if (eep_mode == 2) {
@@ -549,7 +572,7 @@ namespace KRCmotor {
      *     | +----------------モード (将来機能）
      *     +------------------モード (将来機能）
      */
-    //% weight=90
+    //% weight=71
     //% blockId=motor_RecMotorData block="記録 操作|%control|オプション|%mode"
     //% control.min=0 control.max=255 control.defl=0
     //% mode.min=0 mode.max=31 mode.defl=0
@@ -615,22 +638,9 @@ namespace KRCmotor {
         serial.writeString("] ")
         eep_read_addr += 2
     }
-    // EEPをwordで読み込む（中身確認用）
-    //% weight=90
-    //% blockId=motor_ReadMotorData block="EEPデータ読み込み（デバッグ用）"
-    export function ReadMotorData(): number {
-        eep_markstr = eep_read_word(eep_read_addr)
-        serial.writeString("EEP adr=")
-        serial.writeNumber(eep_read_addr)
-        serial.writeString(" dat=")
-        serial.writeNumber(eep_markstr)
-        serial.writeString("\n\r")
-        eep_read_addr += 2
-        return eep_markstr
-    }
 
     // 再生開始
-    //% weight=90
+    //% weight=80
     //% blockId=motor_PlayMotorStart block="再生 開始宣言"
     export function PlayMotorStart(): void {
         if (eep_mode) {
@@ -644,7 +654,7 @@ namespace KRCmotor {
         eep_mode = 1
     }
     // 再生停止
-    //% weight=90
+    //% weight=83
     //% blockId=motor_PlayMotorStop block="再生 終了宣言"
     export function PlayMotorStop(): void {
         if (eep_mode == 1) {
@@ -656,7 +666,7 @@ namespace KRCmotor {
         }
     }
     // データ継続か（EOFのチェック）
-    //% weight=90
+    //% weight=81
     //% blockId=motor_PlayMotorOk block="再生 Ok?"
     export function isPlayMotorOk(): boolean {
         if (eep_mode != 1) return false
@@ -691,7 +701,7 @@ namespace KRCmotor {
      *     | +--------------------------------EEPerr  1:Eof  
      *     +----------------------------------EEPerr  1:No data
      */
-    //% weight=90
+    //% weight=82
     //% blockId=motor_PlayMotorData block="再生 データ読み込み"
     export function PlayMotorData(): number {
         if (eep_mode != 1) return 0x8000    // EEPerr = 2
@@ -746,5 +756,32 @@ namespace KRCmotor {
         //serial.writeNumber(retdata) // only debug
         //serial.writeString(",")     // only debug
         return retdata
+    }
+
+    /**
+     * write a byte to function area address
+     * @param addr function number 0-3, 0-3 eg: 1
+     * @param dat is the data will be write, eg: 5
+     */
+    //% blockId="WriteFunc" block="ファンクション番号 %addr|保存データ %dat"
+    //% weight=98 
+    export function eep_write_func(addr: number, dat: number): void {
+        if (addr >= 0 && addr <= 3) {
+            eep_write_byte(FUNC_EEP_ADDR + addr, dat)
+        }
+    }
+
+    /**
+     * read a byte from special address
+     * @param addr function number 0-3, eg: 1
+     */
+    //% blockId="ReadFunc" block="ファンクション番号 %addr"
+    //% weight=99 
+    export function eep_read_func(addr: number): number {
+        if (addr >= 0 && addr <= 3) {
+            return eep_read_byte(FUNC_EEP_ADDR + addr)
+        } else {
+            return 0
+        }
     }
 }
